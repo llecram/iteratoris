@@ -13,34 +13,74 @@ struct c_Node{
         m_child[1]=nullptr;
     }
 };
-template<class T>
-struct c_BT_Iterator{
+/// //////////////////////////////////////////////////////////////////////
+class preorderit{
+public:
+    void operator() (int& a, int arr[]){
+        a=1;
+        arr[0]=0;
+        arr[1]=1;
+    }
+};
+class inorderit{
+public:
+    void operator() (int& a, int arr[]){
+        a=0;
+        arr[0]=0;
+        arr[1]=1;
+    }
+};
+class postorederit{
+public:
+    void operator() (int& a, int arr[]){
+        a=2;
+        arr[0]=0;
+        arr[1]=1;
+    }
+};
+class reverseit{
+public:
+    void operator() (int& a, int arr[]){
+        a=0;
+        arr[0]=1;
+        arr[1]=0;
+    }
+};
+/// ////////////////////////////////////////////////////////////////////////////
+
+template<class T, class R>
+class c_BT_Iterator{
+public:
+    c_BT_Iterator(){
+        myiterator(m_id,ayuda);
+    }
     pair<c_Node<T>*,int> m_pair;
     int m_id;
-    pair<int,int> ayuda;
+    int ayuda[2];
+    R myiterator;
     stack<pair<c_Node<T>*,int> > m_stack;
-    c_BT_Iterator<T> operator=(c_BT_Iterator<T> x){
+    c_BT_Iterator<T,R> operator=(c_BT_Iterator<T,R> x){
         m_stack=x.m_stack;
         return *this;
     }
-    bool operator!=(c_BT_Iterator<T> x){
+    bool operator!=(c_BT_Iterator<T,R> x){
         return m_stack!=x.m_stack;
     }
-    c_BT_Iterator<T> operator++(int){
+    c_BT_Iterator<T,R> operator++(int){
         m_pair=m_stack.top();
         do{
             m_stack.pop();
             if(m_pair.second==m_id){
                 m_stack.push(make_pair(m_pair.first,(m_id+1)%3));
-                if(m_pair.first->m_child[ayuda.first]) m_stack.push(make_pair(m_pair.first->m_child[ayuda.first],m_id));
+                if(m_pair.first->m_child[ayuda[0]]) m_stack.push(make_pair(m_pair.first->m_child[ayuda[0]],m_id));
             }
             else if(m_pair.second==(m_id+1)%3){
                 m_stack.push(make_pair(m_pair.first,(m_id+2)%3));
-                if(m_pair.first->m_child[ayuda.second]) m_stack.push(make_pair(m_pair.first->m_child[ayuda.second],m_id));
+                if(m_pair.first->m_child[ayuda[1]]) m_stack.push(make_pair(m_pair.first->m_child[ayuda[1]],m_id));
             }
-            m_pair=m_stack.top();
+            if(!m_stack.empty())m_pair = m_stack.top();
         }
-        while(m_pair.second!=1 and !m_stack.empty());
+        while(m_pair.second!=1 && !m_stack.empty());
         return *this;
     }
     T operator*(){
@@ -48,79 +88,41 @@ struct c_BT_Iterator{
         return m_pair.first->m_data;
     }
 };
-template <class T>
-class c_BT_Inorder_Iterator : public c_BT_Iterator<T>{
-public:
-    c_BT_Inorder_Iterator(){
-        this->m_id=0;
-        this->ayuda.first=0;
-        this->ayuda.second=1;
-    }
-};
 
-template <class T>
-class c_BT_Preorder_Iterator : public c_BT_Iterator<T>{
-public:
-    c_BT_Preorder_Iterator(){
-        this->m_id=1;
-        this->ayuda.first=0;
-        this->ayuda.second=1;
-    }
-};
-
-template <class T>
-class c_BT_Postorder_Iterator : public c_BT_Iterator<T>{
-public:
-    c_BT_Postorder_Iterator(){
-        this->m_id=2;
-        this->ayuda.first=0;
-        this->ayuda.second=1;
-    }
-};
-template <class T>
-class c_BT_Reverse_Iterator : public c_BT_Iterator<T>{
-public:
-    c_BT_Reverse_Iterator(){
-        this->m_id=0;
-        this->ayuda.first=1;
-        this->ayuda.second=0;
-    }
-};
-template<class T>
+template<class T,class R>
 class c_BinTRee{
 public:
-    typedef c_BT_Inorder_Iterator<T> inorder_iterator;
-    typedef c_BT_Postorder_Iterator<T> postorder_iterator;
-    typedef c_BT_Preorder_Iterator<T> preorder_iterator;
-    typedef c_BT_Reverse_Iterator<T> reverse_iterators;
+    typedef c_BT_Iterator<T,R> alliterator;
     c_BinTRee();
     bool busca(T , c_Node<T>**&);
     bool inserta(T);
     bool saca(T);
     void inorden(c_Node<T>*);
-    inorder_iterator inbegin();
-    inorder_iterator inend();
-    postorder_iterator postbegin();
-    postorder_iterator postend();
-    preorder_iterator prebegin();
-    preorder_iterator preend();
-    reverse_iterators revbegin();
-    reverse_iterators revend();
+    alliterator endd(){
+        return alliterator();
+    }
+    alliterator beginn(){
+        c_Node<T>* p=m_root;
+        alliterator t;
+        t.m_stack.push(make_pair(p,t.m_id));
+        t++;
+        return t;
+    }
     c_Node<T>*m_root;
 };
-template<class T>
-c_BinTRee<T>::c_BinTRee(){
+template<class T,class R>
+c_BinTRee<T,R>::c_BinTRee(){
     m_root=nullptr;
 }
-template<class T>
-bool c_BinTRee<T>::busca(T x, c_Node<T>**&p)
+template<class T,class R>
+bool c_BinTRee<T,R>::busca(T x, c_Node<T>**&p)
 {
     for(p=&m_root; (*p) && (*p)->m_data!=x; p=&(*p)->m_child[(*p)->m_data<x]);
     return (*p);
 }
-template<class T>
+template<class T,class R>
 
-bool c_BinTRee<T>::inserta(T x)
+bool c_BinTRee<T,R>::inserta(T x)
 {
     c_Node<T>**p;
 
@@ -130,9 +132,9 @@ bool c_BinTRee<T>::inserta(T x)
 
     return 1;
 }
-template<class T>
+template<class T, class R>
 
-bool c_BinTRee<T>::saca(T x)
+bool c_BinTRee<T,R>::saca(T x)
 {
     c_Node<T>** p;
     c_Node<T>* temp;
@@ -148,92 +150,22 @@ bool c_BinTRee<T>::saca(T x)
     (*p)=(*p)->m_child[!!(*p)->m_child[1]];
     return 1;
 }
-template<class T>
-typename c_BinTRee<T>::inorder_iterator c_BinTRee<T>::inbegin(){
-    c_Node<T>* p=m_root;
-    inorder_iterator it;
-    it.m_stack.push(make_pair(p,0));
-    it++;
-    return it;
-}
 
-template<class T>
-typename c_BinTRee<T>::inorder_iterator c_BinTRee<T>::inend(){
-    return inorder_iterator();
-}
-
-template<class T>
-typename c_BinTRee<T>::preorder_iterator c_BinTRee<T>::prebegin()
-{
-    c_Node<T>* p=m_root;
-    preorder_iterator it;
-    it.m_stack.push(make_pair(p,1));
-    return it;
-}
-
-template<class T>
-typename c_BinTRee<T>::preorder_iterator c_BinTRee<T>::preend(){
-    return preorder_iterator();
-}
-
-template<class T>
-typename c_BinTRee<T>::postorder_iterator c_BinTRee<T>::postbegin(){
-    c_Node<T>* p=m_root;
-    postorder_iterator it;
-    it.m_stack.push(make_pair(p,2));
-    it++;
-    return it;
-}
-
-template<class T>
-typename c_BinTRee<T>::postorder_iterator c_BinTRee<T>::postend(){
-    return postorder_iterator();
-}
-template<class T>
-typename c_BinTRee<T>::reverse_iterators c_BinTRee<T>::revbegin(){
-    c_Node<T>* p=m_root;
-    reverse_iterators it;
-    it.m_stack.push(make_pair(p,0));
-    it++;
-    return it;
-}
-
-template<class T>
-typename c_BinTRee<T>::reverse_iterators c_BinTRee<T>::revend(){
-    return reverse_iterators();
-}
 int main()
 {
-    c_BinTRee<int> arbol;
-    c_BinTRee<int>::inorder_iterator it;
-    c_BinTRee<int>::postorder_iterator post_it;
-    c_BinTRee<int>::preorder_iterator pre_it;
-    c_BinTRee<int>::reverse_iterators rev;
-    arbol.inserta(4);
-    arbol.inserta(6);
-    arbol.inserta(3);
-    arbol.inserta(8);
-    arbol.inserta(9);
-    arbol.inserta(1);
-    cout<<"inorden: ";
-    for(it=arbol.inbegin();it!=arbol.inend(); it++){
-        cout<<*it<<" ";
-    }
-    cout<<endl;
-    cout<<"postorden: ";
-    for(post_it=arbol.postbegin();post_it!=arbol.postend(); post_it++){
+    c_BinTRee<int,reverseit> tree;
+    c_BinTRee<int,reverseit>::alliterator i;
+    tree.inserta(4);
+    tree.inserta(9);
+    tree.inserta(14);
+    tree.inserta(2);
+    tree.inserta(7);
+    tree.inserta(8);
 
-        cout<<*post_it<<" ";
-    }
-    cout<<endl;
-    cout<<"preorden: ";
-    for(pre_it=arbol.prebegin();pre_it!=arbol.preend(); pre_it++){
+    for (i = tree.beginn(); i != tree.endd(); i++)
+	{
 
-        cout<<*pre_it<<" ";
-    }
-    cout<<endl;
-    cout<<"reverse: ";
-    for(rev=arbol.revbegin();rev!=arbol.revend(); rev++){
-        cout<<*rev<<" ";
-    }
+		cout << *i<<" ";
+	}
+    return 0;
 }
